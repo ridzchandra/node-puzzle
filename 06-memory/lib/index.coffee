@@ -1,17 +1,21 @@
-# This one counts but was not able to meet the memory requirements
-
 fs = require('fs')
+input = fs.createReadStream(__dirname + '/../data/geo.txt', 'utf8')
+readline = require('readline')
+rl = readline.createInterface(
+  input: input
+  terminal: false)
 
 exports.countryIpCounter = (countryCode, cb) ->
   if !countryCode
     return cb()
-  fs.readFile __dirname + '/../data/geo.txt', 'utf8', (err, data) ->
-    if err
-      return cb(err)
-    data = data.toString().split('\n')
-    cb null, Array.from(data).reduce(((prev, curr) ->
-      if curr.split('\u0009')[3] == countryCode
-        prev + +curr.split('\u0009')[1] - (+curr.split('\u0009')[0])
-      else
-        prev
-    ), 0)
+  counter = 0
+  rl.on('line', (line) ->
+    if line
+      line = line.split('\u0009')
+      # GEO_FIELD_MIN, GEO_FIELD_MAX, GEO_FIELD_COUNTRY
+      # line[0],       line[1],       line[3]
+      if line[3] == countryCode
+        counter += +line[1] - (+line[0])
+    return
+  ).on 'close', ->
+    cb null, counter
